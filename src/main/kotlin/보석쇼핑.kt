@@ -1,36 +1,54 @@
-import kotlin.math.*
+import java.util.*
 
-fun main() {
-    class Solution {
-        val hm = HashMap<String, Boolean>()
-        fun solution(gems: Array<String>): IntArray {
-            var answer = intArrayOf(1, gems.size)
+class Solution {
+    // 0: left, 1: up, 2: right, 3:down
+    val LEFT = 0
+    val UP = 1
+    val RIGHT = 2
+    val DOWN = 3
 
-            if(gems.toHashSet().size == 1) return intArrayOf(1, 1)
+    val dx = listOf(0, -1, 0, 1)
+    val dy = listOf(-1, 0, 1, 0)
 
-            for (size in gems.toHashSet().size - 1 until gems.size) {
-                for (i in 1..gems.size - size) {
-                    if (confirm(gems, i, i + size)) {
-                        if(answer[1] - answer[0] > size) {
-                            answer[0] = i
-                            answer[1] = i + size
-                        }
-                    }
+    fun solution(board: Array<IntArray>): Int {
+        var answer = 0
+
+        val que = ArrayDeque<Pos>()
+        val cost = Array(board.size) { IntArray(board.size) { 98765432 } }
+
+        if (board[1][0] == 0) {
+            que.add(Pos(1, 0, DOWN))
+            cost[1][0] = 100
+        }
+        if (board[0][1] == 0) {
+            que.add(Pos(0, 1, RIGHT))
+            cost[0][1] = 100
+        }
+
+        while (que.isNotEmpty()) {
+            val now = que.poll()
+            for (i in 0..3) {
+                val nx = now.x + dx[i]
+                val ny = now.y + dy[i]
+                if (nx !in board.indices || ny !in board.indices) continue
+                val pay = when (now.dir) {
+                    LEFT, RIGHT -> if (i == LEFT || i == RIGHT) 100 else 600
+                    else -> if (i == UP || i == DOWN) 100 else 600
+                }
+                if (board[nx][ny] == 0 && cost[nx][ny] > cost[now.x][now.y] + pay) {
+                    cost[nx][ny] = cost[now.x][now.y] + pay
+                    que.add(Pos(nx, ny, i))
                 }
             }
-
-            return answer
         }
 
-        fun confirm(gems: Array<String>, start: Int, end: Int): Boolean {
-            if (start > end) {
-                return confirm(gems, end, start)
-            }
-            gems.toHashSet().forEach { hm[it] = false }
-            for (i in start-1 until end) {
-                hm[gems[i]] = true
-            }
-            return hm.toList().all { it.second }
+        cost.forEach {
+            it.forEach {print("%5d".format(it))}
+            println()
         }
+
+        return cost[board.size - 1][board.size - 1]
     }
+
+    data class Pos(val x: Int, val y: Int, val dir: Int)
 }
